@@ -141,7 +141,7 @@ class HighwayEnvCentralizedPerfectTargetPenalty(AbstractEnv):
 
     def _create_vehicles(self) -> None:
         """Create some new random vehicles of a given type, and add them on the road."""
-
+        self.controlled_vehicles = []
         if self.config["randomize_starting_position"] == False:
             # self.victim_index = (self.config["controlled_vehicles"]+1)//2
             self.victim_index = self.config["victim_index"]
@@ -174,7 +174,6 @@ class HighwayEnvCentralizedPerfectTargetPenalty(AbstractEnv):
         else:
             while True:
                 self.initial_lanes =[]
-                self.controlled_vehicles = []
                 self.road.vehicles = []
                 for i in range(self.config["controlled_vehicles"]+1):
                     if i == self.victim_index:
@@ -236,8 +235,7 @@ class HighwayEnvCentralizedPerfectTargetPenalty(AbstractEnv):
         if self.render_mode == 'human':
             self.render()
         if self.config["constraint_env"]:
-            # reward = reward - cost
-            reward = (reward, cost)
+            reward = reward - cost
         return obs, reward, terminated, truncated, info
     
     def calc_cost(self, action):

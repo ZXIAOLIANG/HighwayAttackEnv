@@ -138,17 +138,14 @@ class HighwayEnvPerfectTarget(AbstractEnv):
 
     def _create_vehicles(self) -> None:
         """Create some new random vehicles of a given type, and add them on the road."""
-        
+        self.controlled_vehicles = []
         if self.config["randomize_starting_position"] == False:
             # self.victim_index = (self.config["controlled_vehicles"]+1)//2
             self.victim_index = self.config["victim_index"]
             # self.victim_index = 0
         else:
             self.victim_index = random.randint(0, self.config["controlled_vehicles"])
-        while True:
-            self.initial_lanes =[]
-            self.controlled_vehicles = []
-            self.road.vehicles = []
+        if not self.config["testing"]:
             for i in range(self.config["controlled_vehicles"]+1):
                 if i == self.victim_index:
                     v = Vehicle.create_random(
@@ -169,12 +166,39 @@ class HighwayEnvPerfectTarget(AbstractEnv):
                         spacing=self.config["ego_spacing"]
                     )
                     vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
-                    # print(vehicle.lane_index[2])
-                    self.initial_lanes.append(vehicle.lane_index[2])
                     self.controlled_vehicles.append(vehicle)
                     self.road.vehicles.append(vehicle)
-            if tuple(self.initial_lanes) not in self.solved:
-                break
+        else:
+            while True:
+                self.initial_lanes =[]
+                self.controlled_vehicles = []
+                self.road.vehicles = []
+                for i in range(self.config["controlled_vehicles"]+1):
+                    if i == self.victim_index:
+                        v = Vehicle.create_random(
+                                self.road,
+                                speed=25,
+                                lane_id=1,
+                                spacing=self.config["ego_spacing"]
+                            )
+                        self.victim = self.victim_action_type.vehicle_class(self.road, v.position, v.heading, v.speed)
+                        self.road.vehicles.append(self.victim)
+                        # self.victim_observation_type.observer_vehicle = self.victim
+                        self.victim_action_type.controlled_vehicle = self.victim
+                    else:
+                        vehicle = Vehicle.create_random(
+                            self.road,
+                            speed=25,
+                            lane_id=self.config["initial_lane_id"],
+                            spacing=self.config["ego_spacing"]
+                        )
+                        vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+                        # print(vehicle.lane_index[2])
+                        self.initial_lanes.append(vehicle.lane_index[2])
+                        self.controlled_vehicles.append(vehicle)
+                        self.road.vehicles.append(vehicle)
+                if tuple(self.initial_lanes) not in self.solved:
+                    break
             
     def step(self, action: Action) -> Tuple[Observation, float, bool, bool, dict]:
         """
